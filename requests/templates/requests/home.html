@@ -18,56 +18,112 @@
 <body>
     <div class="container">
         <h2>Solicite um Serviço</h2>
-        <form id="requestForm">
-            <label for="nome">Nome</label>
-            <input type="text" id="nome" name="nome" required>
+        <form id="serviceForm">
+            <div class="form-group">
+                <label for="nome">Nome completo</label>
+                <input type="text" id="nome" name="nome" required>
+            </div>
 
-            <label for="numero_contato">Telefone</label>
-            <input type="text" id="numero_contato" name="numero_contato" required>
+            <div class="form-group">
+                <label for="numeroContato">Telefone</label>
+                <input type="tel" id="numeroContato" name="numeroContato" placeholder="3XX XXX XXX" required>
+            </div>
 
-            <label for="tipo_limpeza">Tipo de Serviço</label>
-            <select id="tipo_limpeza" name="tipo_limpeza" required>
-                <option value="">Selecione...</option>
-                <option value="Limpeza Residencial">Limpeza Residencial</option>
-                <option value="Limpeza Comercial">Limpeza Comercial</option>
-                <option value="Pós-Obra">Pós-Obra</option>
-                <option value="Outros">Outros</option>
-            </select>
+            <div class="form-group">
+                <label for="tipoLimpeza">Tipo de Serviço</label>
+                <select id="tipoLimpeza" name="tipoLimpeza" required>
+                    <option value="">Selecione o serviço...</option>
+                    <option value="Limpeza Residencial">Limpeza Residencial</option>
+                    <option value="Limpeza Comercial">Limpeza Comercial</option>
+                    <option value="Limpeza Pós-Obra">Limpeza Pós-Obra</option>
+                    <option value="Limpeza Profunda">Limpeza Profunda</option>
+                    <option value="Limpeza de Escritório">Limpeza de Escritório</option>
+                    <option value="Outros">Outros</option>
+                </select>
+            </div>
 
-            <button type="submit">Enviar</button>
+            <button type="submit" class="btn-submit">Enviar Solicitação</button>
         </form>
+        <div id="popupSuccess" style="display:none;position:fixed;top:0;left:0;width:100vw;height:100vh;background:rgba(0,0,0,0.3);z-index:9999;align-items:center;justify-content:center;">
+            <div style="background:#fff;padding:32px 24px;border-radius:10px;box-shadow:0 2px 16px rgba(0,0,0,0.15);text-align:center;max-width:90vw;">
+                <span style="font-size:2.5rem;color:#10b981;">&#10003;</span>
+                <h2 style="margin:16px 0 8px 0;">Pedido enviado!</h2>
+                <p style="color:#374151;">Sua solicitação foi enviada com sucesso.</p>
+                <button id="closePopupBtn" style="margin-top:18px;padding:10px 28px;background:#10b981;color:#fff;border:none;border-radius:6px;font-size:1rem;cursor:pointer;">OK</button>
+            </div>
+        </div>
         <div class="msg" id="msg"></div>
     </div>
     <script>
-        // URL do backend Spring Boot
-        const SPRING_API_URL = 'http://localhost:8080/api/requests';
-        document.getElementById('requestForm').addEventListener('submit', async function(e) {
+        // Máscara para telefone português
+        document.getElementById('numeroContato').addEventListener('input', function(e) {
+            let value = e.target.value.replace(/\D/g, '');
+            if (value.length > 9) {
+                value = value.slice(0, 9);
+            }
+            if (value.length >= 7) {
+                value = value.replace(/(\d{3})(\d{3})(\d{3})/, '$1 $2 $3');
+            } else if (value.length >= 4) {
+                value = value.replace(/(\d{3})(\d{3})/, '$1 $2');
+            } else if (value.length >= 1) {
+                value = value.replace(/(\d{3})/, '$1');
+            }
+            e.target.value = value;
+        });
+
+        document.getElementById('numeroContato').addEventListener('blur', function(e) {
+            const value = e.target.value.replace(/\D/g, '');
+            const input = e.target;
+            input.style.borderColor = '#e5e7eb';
+            if (value.length > 0 && value.length !== 9) {
+                input.style.borderColor = '#ef4444';
+                input.title = 'Número de telefone deve ter 9 dígitos';
+            } else if (value.length === 9) {
+                const firstDigit = value[0];
+                if (firstDigit === '9' || firstDigit === '2') {
+                    input.style.borderColor = '#10b981';
+                    input.title = 'Número válido';
+                } else {
+                    input.style.borderColor = '#ef4444';
+                    input.title = 'Número deve começar com 2 (fixo) ou 9 (móvel)';
+                }
+            }
+        });
+
+        document.getElementById('serviceForm').addEventListener('submit', async function(e) {
             e.preventDefault();
+            const submitBtn = document.querySelector('.btn-submit');
+            submitBtn.classList.add('loading');
+            submitBtn.textContent = '';
+            // CAPTURA OS CAMPOS COM OS NOVOS IDS
             const nome = document.getElementById('nome').value;
-            const tipoLimpeza = document.getElementById('tipo_limpeza').value;
-            const numeroContato = document.getElementById('numero_contato').value;
-            const msgDiv = document.getElementById('msg');
-            msgDiv.textContent = '';
+            const numeroContato = document.getElementById('numeroContato').value;
+            const tipoLimpeza = document.getElementById('tipoLimpeza').value;
             try {
-                const response = await fetch(SPRING_API_URL, {
+                const response = await fetch('http://localhost:8080/api/requests', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ nome, tipoLimpeza, numeroContato })
                 });
-                const data = await response.json().catch(() => ({}));
-                if (response.ok) {
-                    msgDiv.style.color = 'green';
-                    msgDiv.textContent = 'Solicitação enviada com sucesso!';
-                    document.getElementById('requestForm').reset();
+                submitBtn.classList.remove('loading');
+                submitBtn.textContent = 'Enviar Solicitação';
+                if (!response.ok) {
+                    alert('Erro ao enviar solicitação.');
                 } else {
-                    msgDiv.style.color = 'red';
-                    msgDiv.textContent = data.error || 'Erro ao enviar solicitação.';
+                    this.reset();
+                    // Mostra popup de sucesso
+                    document.getElementById('popupSuccess').style.display = 'flex';
                 }
             } catch (err) {
-                msgDiv.style.color = 'red';
-                msgDiv.textContent = 'Erro de conexão com o servidor.';
+                submitBtn.classList.remove('loading');
+                submitBtn.textContent = 'Enviar Solicitação';
+                alert('Erro de conexão com o servidor.');
             }
         });
+        // Fecha o popup ao clicar em OK
+        document.getElementById('closePopupBtn').onclick = function() {
+            document.getElementById('popupSuccess').style.display = 'none';
+        };
     </script>
 </body>
 </html> 
