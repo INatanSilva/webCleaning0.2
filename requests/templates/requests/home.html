@@ -30,6 +30,11 @@
             </div>
 
             <div class="form-group">
+                <label for="localizacao">Localização</label>
+                <input type="text" id="localizacao" name="localizacao" placeholder="Ex: Lisboa, Porto..." required>
+            </div>
+
+            <div class="form-group">
                 <label for="tipoLimpeza">Tipo de Serviço</label>
                 <select id="tipoLimpeza" name="tipoLimpeza" required>
                     <option value="">Selecione o serviço...</option>
@@ -95,15 +100,15 @@
             const submitBtn = document.querySelector('.btn-submit');
             submitBtn.classList.add('loading');
             submitBtn.textContent = '';
-            // CAPTURA OS CAMPOS COM OS NOVOS IDS
             const nome = document.getElementById('nome').value;
             const numeroContato = document.getElementById('numeroContato').value;
+            const localizacao = document.getElementById('localizacao').value;
             const tipoLimpeza = document.getElementById('tipoLimpeza').value;
             try {
                 const response = await fetch('http://localhost:8080/api/requests', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ nome, tipoLimpeza, numeroContato })
+                    body: JSON.stringify({ nome, tipoLimpeza, numeroContato, localizacao })
                 });
                 submitBtn.classList.remove('loading');
                 submitBtn.textContent = 'Enviar Solicitação';
