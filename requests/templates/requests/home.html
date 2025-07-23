@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>WebCleaning - Solicitar Serviço</title>
+    <style>
+        body { font-family: Arial, sans-serif; background: #f7f7f7; margin: 0; padding: 0; }
+        .container { max-width: 400px; margin: 60px auto; background: #fff; padding: 32px 24px; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.08); }
+        h2 { text-align: center; margin-bottom: 24px; }
+        label { display: block; margin-bottom: 6px; font-weight: bold; }
+        input, select { width: 100%; padding: 8px; margin-bottom: 18px; border: 1px solid #ccc; border-radius: 4px; }
+        button { width: 100%; padding: 10px; background: #007bff; color: #fff; border: none; border-radius: 4px; font-size: 16px; cursor: pointer; }
+        button:hover { background: #0056b3; }
+        .msg { text-align: center; margin-top: 16px; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h2>Solicite um Serviço</h2>
+        <form id="requestForm">
+            <label for="nome">Nome</label>
+            <input type="text" id="nome" name="nome" required>
+
+            <label for="numero_contato">Telefone</label>
+            <input type="text" id="numero_contato" name="numero_contato" required>
+
+            <label for="tipo_limpeza">Tipo de Serviço</label>
+            <select id="tipo_limpeza" name="tipo_limpeza" required>
+                <option value="">Selecione...</option>
+                <option value="Limpeza Residencial">Limpeza Residencial</option>
+                <option value="Limpeza Comercial">Limpeza Comercial</option>
+                <option value="Pós-Obra">Pós-Obra</option>
+                <option value="Outros">Outros</option>
+            </select>
+
+            <button type="submit">Enviar</button>
+        </form>
+        <div class="msg" id="msg"></div>
+    </div>
+    <script>
+        // URL do backend Spring Boot
+        const SPRING_API_URL = 'http://localhost:8080/api/requests';
+        document.getElementById('requestForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            const nome = document.getElementById('nome').value;
+            const tipoLimpeza = document.getElementById('tipo_limpeza').value;
+            const numeroContato = document.getElementById('numero_contato').value;
+            const msgDiv = document.getElementById('msg');
+            msgDiv.textContent = '';
+            try {
+                const response = await fetch(SPRING_API_URL, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ nome, tipoLimpeza, numeroContato })
+                });
+                const data = await response.json().catch(() => ({}));
+                if (response.ok) {
+                    msgDiv.style.color = 'green';
+                    msgDiv.textContent = 'Solicitação enviada com sucesso!';
+                    document.getElementById('requestForm').reset();
+                } else {
+                    msgDiv.style.color = 'red';
+                    msgDiv.textContent = data.error || 'Erro ao enviar solicitação.';
+                }
+            } catch (err) {
+                msgDiv.style.color = 'red';
+                msgDiv.textContent = 'Erro de conexão com o servidor.';
+            }
+        });
+    </script>
+</body>
+</html> 
